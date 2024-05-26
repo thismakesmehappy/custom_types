@@ -63,6 +63,17 @@ function create_custom_post_type($type, $name, $fields, $include_default_body = 
 
     register_post_type($type, $args);
 
+    // Register custom fields with the REST API
+    foreach ($fields as $field_id => $field) {
+        register_rest_field($type, $field_id, array(
+            'get_callback' => function($post_arr) use ($field_id) {
+                return get_post_meta($post_arr['id'], $field_id, true);
+            },
+            'update_callback' => null,
+            'schema' => null,
+        ));
+    }
+
     add_action('add_meta_boxes', function () use ($type, $fields) {
         foreach ($fields as $field_id => $field) {
             add_meta_box(
@@ -155,6 +166,7 @@ function get_custom_posts_with_meta($request, $type) {
                 'ID' => get_the_ID(),
                 'title' => get_the_title(),
                 'content' => get_the_content(),
+                'custom_fields' => get_post_meta(get_the_ID()), // Include custom fields
             );
         }
         wp_reset_postdata();
