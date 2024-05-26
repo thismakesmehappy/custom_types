@@ -12,3 +12,6 @@ create_custom_post_types();
 - If in step 1 you chang `types` for another subdirectory, make sure `$types_directory` matches that value
 3. Customize your types by modifying `custom_type_definitions`
  - `type` should never be longer than 20 characters, or the typ won't show up in the UI
+
+4. To use API, make sure your permalinks are not set to plain
+ - Settings -> Permalinks -> Permalink structure
