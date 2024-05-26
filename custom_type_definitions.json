@@ -29,7 +29,15 @@
           "Full Color"
         ]
       }
-    }
+    },
+    "endpoints": [
+      {
+        "route": "meta",
+        "methods": "GET",
+        "callback": "get_custom_posts_with_meta",
+        "version": "v1"
+      }
+    ]
   },
   "my_custom_post_type2": {
     "type": "my_custom_post_type2",
@@ -60,6 +68,14 @@
           "Full Color"
         ]
       }
-    }
+    },
+    "endpoints": [
+      {
+        "route": "meta",
+        "methods": "GET",
+        "callback": "get_custom_posts_with_meta",
+        "version": "v1"
+      }
+    ]
   }
 }
