@@ -27,7 +27,7 @@ function create_custom_post_type_from_array($array) {
     }
 }
 
-function create_custom_post_type($type, $name, $fields, $include_default_body = false, $description = null, $position = null) {
+function create_custom_post_type($type, $name, $fields, $include_default_body = true, $description = null, $position = null) {
     $supports = array('title', 'thumbnail');
     if ($include_default_body) {
         $supports[] = 'editor';
@@ -50,7 +50,7 @@ function create_custom_post_type($type, $name, $fields, $include_default_body = 
         'show_in_nav_menus' => true,
         'can_export' => true,
         'capability_type' => 'post',
-        'show_in_rest' => true, // Expose to the REST API
+        'show_in_rest' => $include_default_body, // Expose to the REST API only if content is true
     );
 
     if (isset($description)) {
@@ -63,15 +63,17 @@ function create_custom_post_type($type, $name, $fields, $include_default_body = 
 
     register_post_type($type, $args);
 
-    // Register custom fields with the REST API
-    foreach ($fields as $field_id => $field) {
-        register_rest_field($type, $field_id, array(
-            'get_callback' => function($post_arr) use ($field_id) {
-                return get_post_meta($post_arr['id'], $field_id, true);
-            },
-            'update_callback' => null,
-            'schema' => null,
-        ));
+    // Register custom fields with the REST API if content is true
+    if ($include_default_body) {
+        foreach ($fields as $field_id => $field) {
+            register_rest_field($type, $field_id, array(
+                'get_callback' => function($post_arr) use ($field_id) {
+                    return get_post_meta($post_arr['id'], $field_id, true);
+                },
+                'update_callback' => null,
+                'schema' => null,
+            ));
+        }
     }
 
     add_action('add_meta_boxes', function () use ($type, $fields) {
@@ -83,7 +85,7 @@ function create_custom_post_type($type, $name, $fields, $include_default_body = 
                 $type,
                 'normal',
                 'default',
-                array('field_id' => $field_id, 'type' => $field['type'])
+                array('field_id' => $field_id, 'type' => $field['type'], 'repeatable' => $field['repeatable'] ?? false)
             );
         }
     });
@@ -98,10 +100,16 @@ function create_custom_post_type($type, $name, $fields, $include_default_body = 
             if (!current_user_can('edit_post', $post_id)) return;
 
             $field_value = $_POST[$field_id] ?? '';
-            if (isset($field['sanitization_callback']) && is_callable($field['sanitization_callback'])) {
-                $field_value = call_user_func($field['sanitization_callback'], $field_value);
+            if ($field['repeatable'] ?? false) {
+                // Save as an array of values
+                $field_value = array_filter($field_value); // Remove empty values
+                update_post_meta($post_id, $field_id, $field_value);
+            } else {
+                if (isset($field['sanitization_callback']) && is_callable($field['sanitization_callback'])) {
+                    $field_value = call_user_func($field['sanitization_callback'], $field_value);
+                }
+                update_post_meta($post_id, $field_id, $field_value);
             }
-            update_post_meta($post_id, $field_id, $field_value);
         }
     });
 }
@@ -111,21 +119,42 @@ function render_custom_field($post, $metabox) {
 
     $field_id = $metabox['args']['field_id'];
     $field_type = $metabox['args']['type'];
-    $value = get_post_meta($post->ID, $field_id, true);
+    $repeatable = $metabox['args']['repeatable'] ?? false;
+    $values = get_post_meta($post->ID, $field_id, true);
+
+    if ($repeatable) {
+        if (!is_array($values)) {
+            $values = array($values); // Convert to array if not already
+        }
+    } else {
+        $values = array($values); // Ensure it's an array for non-repeatable fields
+    }
 
     echo '<label for="' . esc_attr($field_id) . '">' . esc_html($metabox['title']) . '</label>';
+    echo '<div class="custom-fields-container" data-field-id="' . esc_attr($field_id) . '" data-field-type="' . esc_attr($field_type) . '">';
+    foreach ($values as $value) {
+        render_field_html($field_id, $field_type, $value);
+    }
+    echo '</div>';
+    if ($repeatable) {
+        echo '<button type="button" class="button add-field-button" data-field-id="' . esc_attr($field_id) . '">+</button>';
+    }
+}
+
+function render_field_html($field_id, $field_type, $value) {
     switch ($field_type) {
         case 'text':
-            echo '<input type="text" id="' . esc_attr($field_id) . '" name="' . esc_attr($field_id) . '" value="' . esc_attr($value) . '" class="widefat">';
+            echo '<div class="custom-field"><input type="text" name="' . esc_attr($field_id) . '[]" value="' . esc_attr($value) . '" class="widefat">';
             break;
         case 'textarea':
-            echo '<textarea id="' . esc_attr($field_id) . '" name="' . esc_attr($field_id) . '" class="widefat">' . esc_textarea($value) . '</textarea>';
+            echo '<div class="custom-field"><textarea name="' . esc_attr($field_id) . '[]" class="widefat">' . esc_textarea($value) . '</textarea>';
             break;
         case 'image':
-            echo '<input type="url" id="' . esc_attr($field_id) . '" name="' . esc_attr($field_id) . '" value="' . esc_url($value) . '" class="widefat">';
+            echo '<div class="custom-field"><input type="url" name="' . esc_attr($field_id) . '[]" value="' . esc_url($value) . '" class="widefat">';
             echo '<button type="button" class="button upload_image_button" data-target="#' . esc_attr($field_id) . '">Upload Image</button>';
             break;
     }
+    echo '<button type="button" class="button remove-field-button">-</button></div>';
 }
 
 function create_custom_post_type_endpoints($type, $endpoints) {
@@ -162,11 +191,22 @@ function get_custom_posts_with_meta($request, $type) {
     if ($query->have_posts()) {
         while ($query->have_posts()) {
             $query->the_post();
+            $custom_fields = get_post_meta(get_the_ID());
+
+            // Deserialize each field if necessary
+            foreach ($custom_fields as $key => $value) {
+                if (is_serialized($value[0])) {
+                    $custom_fields[$key] = maybe_unserialize($value[0]);
+                } else {
+                    $custom_fields[$key] = $value[0];
+                }
+            }
+
             $posts[] = array(
                 'ID' => get_the_ID(),
                 'title' => get_the_title(),
                 'content' => get_the_content(),
-                'custom_fields' => get_post_meta(get_the_ID()), // Include custom fields
+                'custom_fields' => $custom_fields, // Include custom fields and unserialize
             );
         }
         wp_reset_postdata();
