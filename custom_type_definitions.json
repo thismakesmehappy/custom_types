@@ -1,0 +1,65 @@
+{
+  "my_custom_post_type1": {
+    "type": "my_custom_post_type",
+    "name": "My Custom Post Type",
+    "description": "The first custom type",
+    "include_default_body": true,
+    "position": 11,
+    "fields": {
+      "custom_text": {
+        "type": "text",
+        "label": "Custom Text Field",
+        "sanitization_callback": "sanitize_text_field",
+        "nonce": "custom_text_nonce"
+      },
+      "custom_textarea": {
+        "type": "textarea",
+        "label": "Custom Textarea Field",
+        "sanitization_callback": "sanitize_textarea_field",
+        "nonce": "custom_textarea_nonce"
+      },
+      "custom_image": {
+        "type": "image",
+        "label": "Custom Image Field",
+        "sanitization_callback": "esc_url_raw",
+        "nonce": "custom_image_nonce",
+        "options": [
+          "None",
+          "Black & White",
+          "Full Color"
+        ]
+      }
+    }
+  },
+  "my_custom_post_type2": {
+    "type": "my_custom_post_type2",
+    "name": "My Other Custom Post Type",
+    "description": "The second custom type",
+    "position": 12,
+    "fields": {
+      "custom_text_redux": {
+        "type": "text",
+        "label": "Custom Text Field",
+        "sanitization_callback": "sanitize_text_field",
+        "nonce": "custom_text_nonce"
+      },
+      "custom_textarea_redux": {
+        "type": "textarea",
+        "label": "Custom Textarea Field",
+        "sanitization_callback": "sanitize_textarea_field",
+        "nonce": "custom_textarea_nonce"
+      },
+      "custom_image_redux": {
+        "type": "image",
+        "label": "Custom Image Field",
+        "sanitization_callback": "esc_url_raw",
+        "nonce": "custom_image_nonce",
+        "options": [
+          "None",
+          "Black & White",
+          "Full Color"
+        ]
+      }
+    }
+  }
+}
