@@ -137,7 +137,7 @@ function render_custom_field($post, $metabox) {
     }
     echo '</div>';
     if ($repeatable) {
-        echo '<button type="button" class="button add-field-button" data-field-id="' . esc_attr($field_id) . '">+</button>';
+        echo '<button type="button" class="button add-field-button" data-field-id="' . esc_attr($field_id) . '">ADD</button>';
     }
 }
 
@@ -154,7 +154,7 @@ function render_field_html($field_id, $field_type, $value) {
             echo '<button type="button" class="button upload_image_button" data-target="#' . esc_attr($field_id) . '">Upload Image</button>';
             break;
     }
-    echo '<button type="button" class="button remove-field-button">-</button></div>';
+    echo '<button type="button" class="button remove-field-button">REMOVE</button></div>';
 }
 
 function create_custom_post_type_endpoints($type, $endpoints) {

@@ -13,7 +13,7 @@ jQuery(document).ready(function($) {
                 fieldHtml += '<button type="button" class="button upload_image_button" data-target="#' + fieldId + '">Upload Image</button>';
                 break;
         }
-        fieldHtml += '<button type="button" class="button remove-field-button">-</button>';
+        fieldHtml += '<button type="button" class="button remove-field-button">REMOVE</button>';
         return '<div class="custom-field">' + fieldHtml + '</div>';
     }
 
