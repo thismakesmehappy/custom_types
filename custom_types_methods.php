@@ -1,5 +1,12 @@
 <?php
-$custom_types = load_custom_types_from_json(get_template_directory() . '/types/custom_type_definitions.json');
+$custom_types = load_custom_types_from_json(get_template_directory() . "$types_directory/custom_type_definitions.json");
+
+function enqueue_custom_admin_scripts() {
+    global $types_directory;
+    wp_enqueue_script('my-custom-admin-script', get_template_directory_uri() ."$types_directory/js/image_for_types.js", array('jquery'), null, true);
+    wp_enqueue_media(); // Ensures the WordPress media uploader is available
+}
+add_action('admin_enqueue_scripts', 'enqueue_custom_admin_scripts');
 
 function load_custom_types_from_json($file)
 {
