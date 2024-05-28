@@ -133,7 +133,7 @@ function render_custom_field($post, $metabox) {
     echo '<label for="' . esc_attr($field_id) . '">' . esc_html($metabox['title']) . '</label>';
     echo '<div class="custom-fields-container" data-field-id="' . esc_attr($field_id) . '" data-field-type="' . esc_attr($field_type) . '">';
     foreach ($values as $value) {
-        render_field_html($field_id, $field_type, $value);
+        render_field_html($field_id, $field_type, $value, $repeatable);
     }
     echo '</div>';
     if ($repeatable) {
@@ -141,7 +141,7 @@ function render_custom_field($post, $metabox) {
     }
 }
 
-function render_field_html($field_id, $field_type, $value) {
+function render_field_html($field_id, $field_type, $value, $repeatable) {
     switch ($field_type) {
         case 'text':
             echo '<div class="custom-field"><input type="text" name="' . esc_attr($field_id) . '[]" value="' . esc_attr($value) . '" class="widefat">';
@@ -154,7 +154,9 @@ function render_field_html($field_id, $field_type, $value) {
             echo '<button type="button" class="button upload_image_button" data-target="#' . esc_attr($field_id) . '">Upload Image</button>';
             break;
     }
-    echo '<button type="button" class="button remove-field-button">REMOVE</button></div>';
+    if ($repeatable) {
+        echo '<button type="button" class="button remove-field-button">REMOVE</button></div>';
+    }
 }
 
 function create_custom_post_type_endpoints($type, $endpoints) {
