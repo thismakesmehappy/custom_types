@@ -67,8 +67,12 @@ function create_custom_post_type($type, $name, $fields, $include_default_body = 
     if ($include_default_body) {
         foreach ($fields as $field_id => $field) {
             register_rest_field($type, $field_id, array(
-                'get_callback' => function($post_arr) use ($field_id) {
-                    return get_post_meta($post_arr['id'], $field_id, true);
+                'get_callback' => function($post_arr) use ($field_id, $field) {
+                    $value = get_post_meta($post_arr['id'], $field_id, true);
+                    if ($field['repeatable'] ?? false) {
+                        return $value; // Return as an array if repeatable
+                    }
+                    return $value;
                 },
                 'update_callback' => null,
                 'schema' => null,
@@ -85,7 +89,7 @@ function create_custom_post_type($type, $name, $fields, $include_default_body = 
                 $type,
                 'normal',
                 'default',
-                array('field_id' => $field_id, 'type' => $field['type'], 'repeatable' => $field['repeatable'] ?? false)
+                array('field_id' => $field_id, 'type' => $field['type'], 'repeatable' => $field['repeatable'] ?? false, 'options' => $field['options'] ?? array())
             );
         }
     });
@@ -103,7 +107,7 @@ function create_custom_post_type($type, $name, $fields, $include_default_body = 
             if ($field['repeatable'] ?? false) {
                 // Save as an array of values
                 $field_value = array_filter($field_value); // Remove empty values
-                update_post_meta($post_id, $field_id, $field_value);
+                update_post_meta($post_id, $field_id, $field_value); // Save as array
             } else {
                 if (isset($field['sanitization_callback']) && is_callable($field['sanitization_callback'])) {
                     $field_value = call_user_func($field['sanitization_callback'], $field_value);
@@ -120,6 +124,7 @@ function render_custom_field($post, $metabox) {
     $field_id = $metabox['args']['field_id'];
     $field_type = $metabox['args']['type'];
     $repeatable = $metabox['args']['repeatable'] ?? false;
+    $options = $metabox['args']['options'] ?? array();
     $values = get_post_meta($post->ID, $field_id, true);
 
     if ($repeatable) {
@@ -131,9 +136,9 @@ function render_custom_field($post, $metabox) {
     }
 
     echo '<label for="' . esc_attr($field_id) . '">' . esc_html($metabox['title']) . '</label>';
-    echo '<div class="custom-fields-container" data-field-id="' . esc_attr($field_id) . '" data-field-type="' . esc_attr($field_type) . '">';
+    echo '<div class="custom-fields-container" data-field-id="' . esc_attr($field_id) . '" data-field-type="' . esc_attr($field_type) . '" data-field-options="' . esc_attr(json_encode($options)) . '">';
     foreach ($values as $value) {
-        render_field_html($field_id, $field_type, $value, $repeatable);
+        render_field_html($field_id, $field_type, $value, $repeatable, $options);
     }
     echo '</div>';
     if ($repeatable) {
@@ -141,7 +146,7 @@ function render_custom_field($post, $metabox) {
     }
 }
 
-function render_field_html($field_id, $field_type, $value, $repeatable) {
+function render_field_html($field_id, $field_type, $value, $repeatable, $options) {
     switch ($field_type) {
         case 'text':
             echo '<div class="custom-field"><input type="text" name="' . esc_attr($field_id) . '[]" value="' . esc_attr($value) . '" class="widefat">';
@@ -152,6 +157,28 @@ function render_field_html($field_id, $field_type, $value, $repeatable) {
         case 'image':
             echo '<div class="custom-field"><input type="url" name="' . esc_attr($field_id) . '[]" value="' . esc_url($value) . '" class="widefat">';
             echo '<button type="button" class="button upload_image_button" data-target="#' . esc_attr($field_id) . '">Upload Image</button>';
+            break;
+        case 'checkbox':
+            echo '<div class="custom-field">';
+            foreach ($options as $option) {
+                $checked = in_array($option['value'], (array)$value) ? 'checked' : '';
+                echo '<label><input type="checkbox" name="' . esc_attr($field_id) . '[]" value="' . esc_attr($option['value']) . '" ' . $checked . '> ' . esc_html($option['label']) . '</label><br>';
+            }
+            break;
+        case 'radio':
+            echo '<div class="custom-field">';
+            foreach ($options as $option) {
+                $checked = ($option['value'] === $value) ? 'checked' : '';
+                echo '<label><input type="radio" name="' . esc_attr($field_id) . '" value="' . esc_attr($option['value']) . '" ' . $checked . '> ' . esc_html($option['label']) . '</label><br>';
+            }
+            break;
+        case 'dropdown':
+            echo '<div class="custom-field"><select name="' . esc_attr($field_id) . '" class="widefat">';
+            foreach ($options as $option) {
+                $selected = ($option['value'] === $value) ? 'selected' : '';
+                echo '<option value="' . esc_attr($option['value']) . '" ' . $selected . '>' . esc_html($option['label']) . '</option>';
+            }
+            echo '</select>';
             break;
     }
     if ($repeatable) {

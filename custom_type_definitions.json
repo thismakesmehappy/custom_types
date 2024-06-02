@@ -31,48 +31,35 @@
           "Black & White",
           "Full Color"
         ]
-      }
-    },
-    "endpoints": [
-      {
-        "route": "meta",
-        "methods": "GET",
-        "callback": "get_custom_posts_with_meta",
-        "version": "v1"
-      }
-    ]
-  },
-  "my_custom_post_type2": {
-    "type": "my_custom_post_type2",
-    "name": "My Other Custom Post Type",
-    "description": "The second custom type",
-    "include_default_body": false,
-    "position": 12,
-    "fields": {
-      "custom_text_redux": {
-        "type": "text",
-        "label": "Custom Text Field",
-        "sanitization_callback": "sanitize_text_field",
-        "nonce": "custom_text_nonce",
-        "repeatable": false
       },
-      "custom_textarea_redux": {
-        "type": "textarea",
-        "label": "Custom Textarea Field",
-        "sanitization_callback": "sanitize_textarea_field",
-        "nonce": "custom_textarea_nonce",
-        "repeatable": true
-      },
-      "custom_image_redux": {
-        "type": "image",
-        "label": "Custom Image Field",
-        "sanitization_callback": "esc_url_raw",
-        "nonce": "custom_image_nonce",
-        "repeatable": true,
+      "custom_checkbox": {
+        "type": "checkbox",
+        "label": "Custom Checkbox Field",
+        "nonce": "custom_checkbox_nonce",
+        "repeatable": false,
         "options": [
-          "None",
-          "Black & White",
-          "Full Color"
+          {"label": "Option 1", "value": "1"},
+          {"label": "Option 2", "value": "2"}
+        ]
+      },
+      "custom_radio": {
+        "type": "radio",
+        "label": "Custom Radio Field",
+        "nonce": "custom_radio_nonce",
+        "repeatable": false,
+        "options": [
+          {"label": "Option A", "value": "A"},
+          {"label": "Option B", "value": "B"}
+        ]
+      },
+      "custom_dropdown": {
+        "type": "dropdown",
+        "label": "Custom Dropdown Field",
+        "nonce": "custom_dropdown_nonce",
+        "repeatable": false,
+        "options": [
+          {"label": "Choice 1", "value": "1"},
+          {"label": "Choice 2", "value": "2"}
         ]
       }
     },

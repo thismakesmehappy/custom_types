@@ -1,5 +1,5 @@
 jQuery(document).ready(function($) {
-    function addField(fieldId, fieldType, value = '') {
+    function addField(fieldId, fieldType, value = '', options = []) {
         let fieldHtml = '';
         switch (fieldType) {
             case 'text':
@@ -12,6 +12,26 @@ jQuery(document).ready(function($) {
                 fieldHtml = '<input type="url" name="' + fieldId + '[]" value="' + value + '" class="widefat">';
                 fieldHtml += '<button type="button" class="button upload_image_button" data-target="#' + fieldId + '">Upload Image</button>';
                 break;
+            case 'checkbox':
+                options.forEach(option => {
+                    const checked = value.includes(option.value) ? 'checked' : '';
+                    fieldHtml += '<label><input type="checkbox" name="' + fieldId + '[]" value="' + option.value + '" ' + checked + '> ' + option.label + '</label><br>';
+                });
+                break;
+            case 'radio':
+                options.forEach(option => {
+                    const checked = (value === option.value) ? 'checked' : '';
+                    fieldHtml += '<label><input type="radio" name="' + fieldId + '" value="' + option.value + '" ' + checked + '> ' + option.label + '</label><br>';
+                });
+                break;
+            case 'dropdown':
+                fieldHtml = '<select name="' + fieldId + '" class="widefat">';
+                options.forEach(option => {
+                    const selected = (value === option.value) ? 'selected' : '';
+                    fieldHtml += '<option value="' + option.value + '" ' + selected + '>' + option.label + '</option>';
+                });
+                fieldHtml += '</select>';
+                break;
         }
         fieldHtml += '<button type="button" class="button remove-field-button">REMOVE</button>';
         return '<div class="custom-field">' + fieldHtml + '</div>';
@@ -21,7 +41,8 @@ jQuery(document).ready(function($) {
         e.preventDefault();
         const fieldId = $(this).data('field-id');
         const fieldType = $('.custom-fields-container[data-field-id="' + fieldId + '"]').data('field-type');
-        const newField = addField(fieldId, fieldType);
+        const fieldOptions = $('.custom-fields-container[data-field-id="' + fieldId + '"]').data('field-options');
+        const newField = addField(fieldId, fieldType, '', fieldOptions);
         $('.custom-fields-container[data-field-id="' + fieldId + '"]').append(newField);
     });
 
